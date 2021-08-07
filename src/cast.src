@@ -1,0 +1,72 @@
+module.exports = function(value, type)
+	valueType = typeof(value)
+	tString = "string"
+	tNumber = "number"
+	tBoolean = "boolean"
+	tMap = "map"
+	tList = "list"
+	tNull = "null"
+
+	if (type == tNumber) then
+		if (valueType == tString) then
+			value = value.to_int
+			if (typeof(value) == tString) then value = 0
+		else if (valueType == tList) then
+			value = value.join("").to_int
+		else if (valueType == tMap and value.hasIndex("toNumber")) then
+			value = value.toNumber()
+		else if (valueType == tNull) then
+			value = 0
+		else if (valueType == tBoolean) then
+			if (value) then
+				value = 1
+			else
+				value = 0
+			end if
+		end if
+
+		return value
+	else if (type == tString) then
+		if (valueType == tNumber) then
+			value = value + ""
+		else if (valueType == tList) then
+			value = value.join("")
+		else if (valueType == tMap and value.hasIndex("toString")) then
+			value = value.toString()
+		else if (valueType == tNull) then
+			value = ""
+		else if (valueType == tBoolean) then
+			if (value) then
+				value = "1"
+			else
+				value = "0"
+			end if
+		end if
+
+		return value
+	else if (type == tList) then
+		if (valueType == tNumber or valueType == tString or valueType == tBoolean) then
+			value = [value]
+		else if (valueType == tMap and value.hasIndex("toList")) then
+			value = value.toList()
+		else if (valueType == tNull) then
+			value = []
+		end if
+
+		return value
+	else if (type == tBoolean) then
+		if (valueType == tNumber) then
+			value = value != 0
+		else if (valueType == tString) then
+			value = value == "1"
+		else if (valueType == tMap and value.hasIndex("toBoolean")) then
+			value = value.toBoolean()
+		else if (valueType == tNull) then
+			value = false
+		end if
+
+		return value
+	end if
+
+	return null
+end function

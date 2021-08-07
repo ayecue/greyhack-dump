@@ -1,0 +1,65 @@
+Validator = {}
+
+ALPHABETIC_LOWER = "qwertzuiopasdfghjklyxcvbnm"
+ALPHABETIC_UPPER = ALPHABETIC_LOWER.upper
+ALPHABETIC_ALL = ALPHABETIC_LOWER + ALPHABETIC_UPPER
+NUMERIC = "0123456789"
+WORD = ALPHABETIC_ALL + NUMERIC
+CODE = ALPHABETIC_ALL + NUMERIC + ":"
+USERNAME = "-_" + WORD
+OPERATORS = "_ -!?+/:()[]{}$%#*~.,;&="
+PASSWORD = OPERATORS + WORD
+MESSAGE = WORD + OPERATORS
+VERSION = NUMERIC + "."
+TITLE = WORD + OPERATORS 
+SCOPES = ALPHABETIC_LOWER + ":,"
+FLAG = "01"
+
+generateCharMap = function(charList)
+	map = {}
+	for char in charList
+		map[char] = true
+	end for
+	return map
+end function
+
+Validator.T = {}
+Validator.T.ALPHABETIC_LOWER = generateCharMap(ALPHABETIC_LOWER)
+Validator.T.ALPHABETIC_UPPER = generateCharMap(ALPHABETIC_UPPER)
+Validator.T.ALPHABETIC = generateCharMap(ALPHABETIC_ALL)
+Validator.T.NUMERIC = generateCharMap(NUMERIC)
+Validator.T.WORD = generateCharMap(WORD)
+Validator.T.CODE = generateCharMap(CODE)
+Validator.T.USERNAME = generateCharMap(USERNAME)
+Validator.T.OPERATORS = generateCharMap(OPERATORS)
+Validator.T.MESSAGE = generateCharMap(MESSAGE)
+Validator.T.PASSWORD = generateCharMap(PASSWORD)
+Validator.T.VERSION = generateCharMap(VERSION)
+Validator.T.TITLE = generateCharMap(TITLE)
+Validator.T.SCOPES = generateCharMap(SCOPES)
+Validator.T.FLAG = generateCharMap(FLAG)
+
+Validator.i = function(str, map, min, max)
+	if (min == null) then min = 1
+	if (max == null) then max = 20
+	if (map == null or str.len < min or str.len > max) then return false
+	for char in str
+		if (not map.hasIndex(char)) then return false
+	end for
+	return true
+end function
+
+Validator.g = function(type)
+	m = self
+	key = type.upper
+	if (not m.T.hasIndex(key))then return null
+	return m.T[key]
+end function
+
+Validator.c = function(str, type, min, max)
+	m = self
+	if (str == null) then return false
+	return m.i(str, m.g(type), min, max)
+end function
+
+module.exports = Validator

@@ -1,0 +1,130 @@
+Cache = {}
+
+Cache.constructor = function(filename, maxWords, shell)
+	me = self
+	me.filename = filename
+	me.maxWords = maxWords
+	if (maxWords == null) then me.maxWords = 50000
+	me.shell = shell
+	if (shell == null) then me.shell = get_shell
+	me.currentCacheFiles = []
+	return me
+end function
+
+Cache.createCacheFile = function(index)
+	me = self
+	shell = me.shell
+	computer = shell.host_computer
+	cacheFilePath = parent_path(program_path)
+	filename = me.filename
+
+	computer.touch(cacheFilePath, filename + index + ".cache")
+	cacheFile = computer.File(cacheFilePath + "/" + filename + index + ".cache")
+
+	if (active_user == "root") then
+		cacheFile.chmod("u-wrx")
+		cacheFile.chmod("g-wrx")
+		cacheFile.chmod("o-wrx")
+	else
+		cacheFile.chmod("g-wrx")
+		cacheFile.chmod("o-wrx")
+	end if
+
+	return cacheFile
+end function
+
+Cache.findCacheFiles = function()
+	me = self
+	shell = me.shell
+	computer = shell.host_computer
+	filename = me.filename
+	cacheFilePath = parent_path(program_path)
+	index = 0
+	cacheFile = computer.File(cacheFilePath + "/" + filename + index + ".cache")
+	availableCacheFiles = []
+
+	while cacheFile != null
+		availableCacheFiles.push(cacheFile)
+		index = index + 1
+		cacheFile = computer.File(cacheFilePath + "/" + filename + index + ".cache")
+	end while
+
+	if (availableCacheFiles.len == 0) then
+		cacheFile = me.createCacheFile(index)
+		availableCacheFiles.push(cacheFile)
+	end if
+
+	me.currentCacheFiles = availableCacheFiles
+
+	return availableCacheFiles
+end function
+
+Cache.extend = function()
+	me = self
+	nextIndex = me.currentCacheFiles.len
+
+	cacheFile =  me.createCacheFile(nextIndex)
+	me.currentCacheFiles.push(cacheFile)
+
+	return cacheFile
+end function
+
+Cache.read = function(parse, context)
+	if (context == null) then context = {}
+	me = self
+	cacheFiles = me.findCacheFiles()
+	values = {}
+
+	for cacheFile in cacheFiles
+		lines = cacheFile.get_content.split(NEW_LINE_OPERATOR)
+
+		for line in lines
+			if (line == "") then continue
+			value = parse(line, context)
+			value.data.file = cacheFile
+			if (values.hasIndex(value.key)) then print("Dubplicate entry " + value.key)
+			values[value.key] = value.data
+		end for
+	end for
+
+	return values
+end function
+
+Cache.write = function(values, encode, context)
+	if (context == null) then context = {}
+	me = self
+	currentCacheFiles = me.currentCacheFiles
+	cacheFile = currentCacheFiles[currentCacheFiles.len - 1]
+
+	content = cacheFile.get_content
+	size = content.len
+	lines = content.split(NEW_LINE_OPERATOR)
+
+	for item in values
+		value = item.value
+		if (typeof(value.file) == "file") then continue
+
+		line = encode(item, context)
+		size = size + line.len
+
+		if (size > me.maxWords) then
+			cacheFile.set_content(lines.join(NEW_LINE_OPERATOR))
+			lines = []
+			size = 0
+			cacheFile = me.extend()
+		end if
+
+		value.file = cacheFile
+
+		lines.push(line)
+	end for
+
+	if (lines.len > 0) then
+		cacheFile.set_content(lines.join(NEW_LINE_OPERATOR))
+		return true
+	end if
+
+	return false
+end function
+
+module.exports = Cache

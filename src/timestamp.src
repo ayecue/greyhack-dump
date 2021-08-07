@@ -1,0 +1,49 @@
+module.exports = function(date)
+	if (date == null) then date = current_date
+	day = 1
+	month = 1
+	year = 1970
+	hour = 0
+	minute = 0
+	parsed = date.split(" ")
+	
+	if (parsed.hasIndex(0)) then
+		segment = parsed[0].split("-")
+		if (segment.hasIndex(0)) then day = segment[0].to_int
+		if (segment.hasIndex(1)) then month = segment[1].to_int
+		if (segment.hasIndex(2)) then year = segment[2].to_int
+	end if
+
+	if (parsed.hasIndex(1)) then
+		segment = parsed[1].split(":")
+		if (segment.hasIndex(0)) then hour = segment[0].to_int
+		if (segment.hasIndex(1)) then minute = segment[1].to_int
+	end if
+	
+	mdays = [ 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 ];
+	
+	year = year - 1970;
+	minusYear = 0;
+	
+	if ( month >= 3 ) then
+		year = year + 1;
+		minusYear = 1;
+	end if
+	
+	totalDays = day - 1
+	totalDays = totalDays + mdays[month - 1]
+	totalDays = totalDays + ( year + 1 ) / 4
+	totalDays = totalDays - ( year + 69 ) / 100
+	totalDays = totalDays + ( year + 369 ) / 100 / 4
+	totalDays = totalDays + ( 5 * 73 ) * ( year - minusYear )
+	
+	totalHours = hour
+	totalHours = totalHours + totalDays * 24
+	
+	totalMinutes = minute
+	totalMinutes = totalMinutes + totalHours * 60
+	
+	totalSeconds = totalMinutes * 60
+	
+	return floor(totalSeconds * 1000)
+end function

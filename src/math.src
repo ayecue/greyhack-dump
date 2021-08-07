@@ -1,0 +1,25 @@
+Math = {}
+
+Math.max = function(values)
+	max = 0
+	for value in values
+		if (value > max) then max = value
+	end for
+	return max
+end function
+
+Math.min = function(values)
+	min = 0
+	for value in values
+		if (value < min) then min = value
+	end for
+	return min
+end function
+
+Math.limit = function(a, b)
+	if (a < b) then return a
+	return b
+end function
+
+module.exports = Math
+

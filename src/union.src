@@ -1,0 +1,9 @@
+module.exports = function(keys, values)
+	map = {}
+	index = 0
+	for key in keys
+		map[key] = values[index]
+		index = index + 1
+	end for
+	return map
+end function

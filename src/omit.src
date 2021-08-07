@@ -1,0 +1,9 @@
+module.exports = function(map, exclude)
+	newMap = {}
+	if (typeof(map) != "map") then return newMap
+	for item in map
+		if (exclude.indexOf(item.key) != null) then continue
+		newMap[item.key] = item.value
+	end for
+	return newMap
+end function

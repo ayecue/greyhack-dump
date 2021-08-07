@@ -1,0 +1,15 @@
+module.exports = function(path, v, defaultValue)
+	path = path.split(".")
+	while v != null
+		currentPath = path.pull()
+		if (typeof(v) == "list") then
+			currentPath = currentPath.to_int
+			if (currentPath > v.len) then return defaultValue
+		end if
+		if (not v.hasIndex(currentPath)) then return defaultValue
+		v = @v[currentPath]
+		if (path.len == 0) then break
+	end while
+	if (v == null or v == "null") then return defaultValue
+	return v
+end function

@@ -1,0 +1,37 @@
+Scanner = {}
+
+Scanner.constructor = function(shell)
+	me = self
+	me.computer = shell.host_computer
+	return me
+end function
+
+Scanner.getTreeIterator = function(file, collection)
+	collection.push(file)
+
+	if file.is_folder then
+		entries = file.get_folders + file.get_files
+
+		for entry in entries
+			self.getTreeIterator(entry, collection)
+		end for
+	end if
+
+	return collection
+end function
+
+Scanner.getTree = function(pathString)
+	me = self
+	file = pathString
+
+	if typeof(pathString) == "string" then
+		file = me.computer.File(pathString)
+		if file == null then
+			return null
+		end if
+	end if
+
+	return me.getTreeIterator(file, [])
+end function
+
+module.exports = Scanner
