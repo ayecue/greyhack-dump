@@ -1,0 +1,188 @@
+localStorageModule = function()
+	LocalStorage = {}
+	LocalStorage.constructor = function(computer, filepath, header)
+		me = self
+		me.classID = "localStorage"
+		me.computer = computer
+		me.filepath = filepath
+		me.header = ["id"] + header
+		me.data = []
+		me.rows = []
+		me.handle = null
+		me.delimiter = char(29)
+		me.read()
+		return me
+	end function
+
+	LocalStorage.parseContent = function(x, content)
+		me = self
+
+		if (typeof(me) != "localStorage") then
+			me = x
+		else
+			content = x
+		end if
+
+		content = content.split(char(10))
+		header = me.header
+		data = []
+		rows = []
+		
+		for row in content
+			item = {}
+			columns = row.split(me.delimiter)
+			if (columns.len != header.len) then continue
+			pos = 0
+			
+			for column in columns
+				item[header[pos]] = column
+				pos = pos + 1
+			end for
+			
+			rows.push(row)
+			data.push(item)
+		end for
+		
+		return {"data":data,"rows":rows}
+	end function
+
+	LocalStorage.read = function(x)
+		me = self
+
+		if (typeof(me) != "localStorage") then
+			me = x
+		end if
+
+		handle = me.computer.File(me.filepath)
+		
+		if (handle == null) then
+			dirname = parent_path(me.filepath)
+			filename = me.filepath.replace(dirname, "")
+			if (filename.indexOf("/") == 0) then filename = filename[1:]
+			me.computer.touch(dirname, filename)
+			handle = me.computer.File(me.filepath)
+
+			if (handle == null) then
+				print("Could not create storage <b>" + me.filepath + "</b>")
+
+				if (active_user != "root") then
+					rootPW = user_input("Root password:", true)
+					rootShell = get_shell("root", rootPW)
+
+					if (rootShell != null) then
+						me.computer = rootShell.host_computer
+						me.read()
+					end if
+				end if
+				return
+			end if
+
+			handle.chmod("u-wrx")
+			handle.chmod("o-wrx")
+			handle.chmod("g-wrx")
+		end if
+		
+		me.handle = handle
+		parseContent = me.parseContent(handle.get_content)
+		me.rows = parseContent.rows
+		me.data = parseContent.data
+	end function
+
+	LocalStorage.import = function(x, data)
+		me = self
+
+		if (typeof(me) != "localStorage") then
+			me = x
+		else
+			data = x
+		end if
+
+		for item in data
+			me.write(item.id, item)
+		end for
+	end function
+
+	LocalStorage.write = function(x, id, item)
+		me = self
+
+		if (typeof(me) != "localStorage") then
+			me = x
+		else
+			item = id
+			id = x
+		end if
+
+		header = me.header
+		data = {}
+		row = []
+		
+		for key in header
+			if (key == "id") then continue
+			if (item.hasIndex(key)) then
+				data[key] = item[key]
+				row.push(item[key])
+			else
+				exit("Key missing " + key)
+			end if
+		end for
+		
+		data["id"] = id
+		row = [id] + row
+		existingIndex = me.getIndex(id)
+		
+		if (existingIndex != null) then
+			me.data[existingIndex] = data
+			me.rows[existingIndex] = row.join(me.delimiter)
+		else
+			me.data.push(data)
+			me.rows.push(row.join(me.delimiter))
+		end if
+		
+		if (me.handle) then
+			me.handle.set_content(me.rows.join(char(10)))
+		end if
+	end function
+
+	LocalStorage.getIndex = function(x, id)
+		me = self
+
+		if (typeof(me) != "localStorage") then
+			me = x
+		else
+			id = x
+		end if
+
+		index = 0
+
+		for item in me.data
+			if (item.id == id) then
+				return index
+			end if
+			index = index + 1
+		end for
+		
+		return null
+	end function
+
+	LocalStorage.get = function(x, id)
+		me = self
+
+		if (typeof(me) != "localStorage") then
+			me = x
+		else
+			id = x
+		end if
+
+		index = me.getIndex(id)
+
+		if (index == null) then
+			return null
+		end if
+		
+		return me.data[index]
+	end function
+
+	return LocalStorage
+end function
+
+injector.def("localStorage", @localStorageModule)
