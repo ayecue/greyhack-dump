@@ -1,31 +1,17 @@
-#import debug from debug;
-
 Random = {}
 
 Random.pool = {}
 Random.defaultSeed = "random"
-Random.debug = @debug
 
 Random.createPool = function(seed, val)
 	return { "seed": seed, "value": val, "generation": 0 }
 end function
 
-Random.calcSeed = function(seed)
-	seedVal = 0
-	pos = seed.len
-	
-	for char in seed
-		seedVal = seedVal + char.code + pos
-		pos = pos - 1
-	end for
-	
-	return seedVal
-end function
+Random.calcSeed = @hash
 
 Random.gen = function(min, max, seed, inc)
 	me = self
 	pool = me.pool
-	debug = @me.debug
 	if (inc == null) then inc = true
 	if (seed == null) then seed = me.defaultSeed
 	if (pool.hasIndex(seed)) then
@@ -38,9 +24,6 @@ Random.gen = function(min, max, seed, inc)
 	end if
 	
 	seedVal = me.calcSeed(seed)
-	
-	debug("Seed sum " + seedVal)
-	
 	val = floor((rnd(seedVal) * (max - min)) + min)
 	pool[seed] = me.createPool(seedVal, val)
 	
